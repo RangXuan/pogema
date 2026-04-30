@@ -1,12 +1,11 @@
 import os
 import time
-import warnings
 
 import numpy as np
 import pytest
 from tabulate import tabulate
 
-from pogema import AnimationConfig, AnimationMonitor, SvgAnimation, pogema_v0
+from pogema import SvgAnimation, pogema_v0
 from pogema.envs import ActionsSampler
 from pogema.grid import GridConfig
 from pogema.wrappers.persistence import PersistentWrapper
@@ -297,6 +296,22 @@ def test_enable_animation_and_save(tmp_path):
     assert '<svg' in content
 
 
+def test_enable_html_animation_and_save(tmp_path):
+    gc = GridConfig(num_agents=2, size=6, obs_radius=2, density=0.3, seed=42, on_target='finish')
+    env = pogema_v0(gc)
+    env.enable_animation()
+    env.reset()
+    run_episode(env=env)
+
+    html_path = str(tmp_path / 'test_anim.html')
+    env.save_html_animation(html_path)
+    assert os.path.exists(html_path)
+    with open(html_path) as f:
+        content = f.read()
+    assert '<!DOCTYPE html>' in content
+    assert 'canvas' in content
+
+
 def test_no_overhead_without_animation():
     gc = GridConfig(num_agents=2, size=6, obs_radius=2, density=0.3, seed=42, on_target='finish')
     env = pogema_v0(gc)
@@ -320,19 +335,6 @@ def test_save_animation_without_enable_raises():
     env.reset()
     with pytest.raises(RuntimeError, match="Animation is not active"):
         env.save_animation('test.svg')
-
-
-def test_animation_monitor_backward_compat():
-    gc = GridConfig(num_agents=2, size=6, obs_radius=2, density=0.3, seed=42, on_target='finish')
-    env = pogema_v0(gc)
-    with warnings.catch_warnings(record=True) as w:
-        warnings.simplefilter("always")
-        env = AnimationMonitor(env, AnimationConfig(save_every_idx_episode=None))
-        assert len(w) == 1
-        assert issubclass(w[0].category, DeprecationWarning)
-        assert "deprecated" in str(w[0].message).lower()
-    env.reset()
-    run_episode(env=env)
 
 
 def test_metrics_with_animation():
@@ -414,7 +416,7 @@ def test_render_animation_with_config():
     env.reset()
     run_episode(env=env)
 
-    anim = env.render_animation(animation_config=AnimationConfig(egocentric_idx=0))
+    anim = env.render_animation(egocentric_idx=0)
     assert isinstance(anim, SvgAnimation)
     assert '<svg' in str(anim)
 

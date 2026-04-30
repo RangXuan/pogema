@@ -8,13 +8,13 @@ from pogema.svg_animation.svg_objects import Animation, Circle, Line, Rectangle,
 
 @dataclass
 class AnimationConfig:
-    directory: str = 'renders/'
     show_agents: bool = True
     egocentric_idx: int | None = None
     static_frame_idx: int | None = None
-    uid: str | None = None
-    save_every_idx_episode: int | None = 1
     show_grid_lines: bool = True
+    show_controls: bool = True
+    colors: tuple | list | None = None
+    speed: float | None = None
 
 
 @dataclass

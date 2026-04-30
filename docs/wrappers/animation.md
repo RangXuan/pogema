@@ -1,6 +1,6 @@
 # Animation
 
-POGEMA can record episodes as SVG animations. The `AnimationWrapper` is included by default but inactive — it adds zero overhead until enabled.
+POGEMA can record episodes as SVG or HTML canvas animations. The `AnimationWrapper` is included by default but inactive — it adds zero overhead until enabled.
 
 ## Basic Usage
 
@@ -22,39 +22,35 @@ svg = re.sub(r'\n\s+', '\n', svg[svg.index('<svg'):])  # markdown-exec: hide
 print(f'<div class="pogema-anim">{svg}</div>')  # markdown-exec: hide
 ```
 
-## AnimationConfig
+## Rendering Options
+
+All rendering options are passed as keyword arguments to `save_animation()`, `save_html_animation()`, `render_animation()`, or `render_html_animation()`:
+
+| Parameter | Type | Default | Description |
+|---|---|---|---|
+| `show_agents` | `bool` | `True` | Render agents on grid |
+| `egocentric_idx` | `int \| None` | `None` | Follow specific agent |
+| `static_frame_idx` | `int \| None` | `None` | Render single frame instead of animation |
+| `show_grid_lines` | `bool` | `True` | Show grid lines |
+| `show_controls` | `bool` | `True` | Show playback controls (HTML only) |
 
 ```python
-from pogema import AnimationConfig
-
-config = AnimationConfig(
-    directory='renders/',              # Output directory
-    show_agents=True,                  # Render agents on grid
-    egocentric_idx=None,               # Follow specific agent (int or None)
-    static_frame_idx=None,             # Render single frame instead of animation
-    show_grid_lines=True,              # Show grid lines
-    save_every_idx_episode=1,          # Save every Nth episode
-)
-```
-
-## Passing Config
-
-```python
-from pogema import pogema_v0, GridConfig, AnimationConfig
+from pogema import pogema_v0, GridConfig
 
 env = pogema_v0(GridConfig(num_agents=4, size=8, seed=42))
-
-# At enable time
-env.enable_animation(animation_config=AnimationConfig(egocentric_idx=0))
+env.enable_animation()
 obs, info = env.reset()
 
-# Or at save time (after running an episode)
 while True:
     obs, reward, terminated, truncated, info = env.step(env.sample_actions())
     if all(terminated) or all(truncated):
         break
 
-env.save_animation('render.svg', animation_config=AnimationConfig(show_grid_lines=False))
+# SVG animation
+env.save_animation('render.svg', show_grid_lines=False)
+
+# HTML canvas animation (with playback controls)
+env.save_html_animation('render.html', show_controls=True)
 ```
 
 ## Egocentric View
@@ -63,7 +59,7 @@ Follow a specific agent's perspective:
 
 ```python exec="on" source="above"
 import re  # markdown-exec: hide
-from pogema import pogema_v0, GridConfig, AnimationConfig
+from pogema import pogema_v0, GridConfig
 
 env = pogema_v0(GridConfig(num_agents=4, size=8, seed=42, obs_radius=3))
 env.enable_animation()
@@ -74,7 +70,7 @@ while True:
     if all(terminated) or all(truncated):
         break
 
-svg = env.render_animation(AnimationConfig(egocentric_idx=0))._repr_html_()  # markdown-exec: hide
+svg = env.render_animation(egocentric_idx=0)._repr_html_()  # markdown-exec: hide
 svg = re.sub(r'\n\s+', '\n', svg[svg.index('<svg'):])  # markdown-exec: hide
 print(f'<div class="pogema-anim">{svg}</div>')  # markdown-exec: hide
 ```
@@ -85,7 +81,7 @@ Render a single timestep instead of an animation:
 
 ```python exec="on" source="above"
 import re  # markdown-exec: hide
-from pogema import pogema_v0, GridConfig, AnimationConfig
+from pogema import pogema_v0, GridConfig
 
 env = pogema_v0(GridConfig(num_agents=4, size=8, seed=42))
 env.enable_animation()
@@ -96,7 +92,7 @@ while True:
     if all(terminated) or all(truncated):
         break
 
-svg = env.render_animation(AnimationConfig(static_frame_idx=0))._repr_html_()  # markdown-exec: hide
+svg = env.render_animation(static_frame_idx=0)._repr_html_()  # markdown-exec: hide
 svg = re.sub(r'\n\s+', '\n', svg[svg.index('<svg'):])  # markdown-exec: hide
 print(f'<div class="pogema-anim">{svg}</div>')  # markdown-exec: hide
 ```

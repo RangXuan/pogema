@@ -26,11 +26,31 @@ class SvgAnimation:
         return f"SvgAnimation({len(self._svg_str)} chars)"
 
 
+class HtmlAnimation:
+    def __init__(self, html_str):
+        self._html_str = html_str
+
+    def _repr_html_(self):
+        return self._html_str
+
+    def save(self, path='render.html'):
+        parent = os.path.dirname(path)
+        if parent:
+            os.makedirs(parent, exist_ok=True)
+        with open(path, "w") as f:
+            f.write(self._html_str)
+
+    def __str__(self):
+        return self._html_str
+
+    def __repr__(self):
+        return f"HtmlAnimation({len(self._html_str)} chars)"
+
+
 class AnimationWrapper(PogemaWrapper):
     def __init__(self, env):
         super().__init__(env)
         self._active = False
-        self._animation_config = None
         self._step = None
         self._agent_states = None
 
@@ -65,10 +85,8 @@ class AnimationWrapper(PogemaWrapper):
         active = grid.is_active[agent_idx]
         return AgentState(x, y, tx, ty, self._step, active)
 
-    def enable_animation(self, animation_config=None):
+    def enable_animation(self):
         self._active = True
-        if animation_config is not None:
-            self._animation_config = animation_config
 
     def disable_animation(self):
         self._active = False
@@ -77,7 +95,7 @@ class AnimationWrapper(PogemaWrapper):
     def animation_is_active(self):
         return self._active
 
-    def _build_svg_string(self, animation_config=None):
+    def _prepare_animation_data(self, **kwargs):
         if not self._active:
             raise RuntimeError(
                 "Animation is not active. Call env.enable_animation() and then env.reset() before saving."
@@ -87,12 +105,9 @@ class AnimationWrapper(PogemaWrapper):
                 "No history recorded. Call env.reset() after enable_animation() before saving."
             )
 
-        from pogema.svg_animation.animation_drawer import AnimationConfig, AnimationDrawer, GridHolder, SvgSettings
+        from pogema.svg_animation.animation_drawer import AnimationConfig, SvgSettings
 
-        if animation_config is None:
-            animation_config = self._animation_config
-        if animation_config is None:
-            animation_config = AnimationConfig()
+        animation_config = AnimationConfig(**kwargs)
 
         working_radius = self.unwrapped.grid_config.obs_radius - 1
         if working_radius > 0:
@@ -101,7 +116,6 @@ class AnimationWrapper(PogemaWrapper):
         else:
             obstacles = self.unwrapped.get_obstacles(ignore_borders=False)
 
-        # Apply offset at render time to shift positions into trimmed coordinate space
         offset = -working_radius
         raw_history = self._agent_states
         shifted_history = []
@@ -114,38 +128,97 @@ class AnimationWrapper(PogemaWrapper):
                     shifted.append(s)
             shifted_history.append(shifted)
 
-        history = decompress_history(shifted_history)
-
         svg_settings = SvgSettings()
+        if animation_config.colors is not None:
+            svg_settings.colors = tuple(animation_config.colors)
+        if animation_config.speed is not None:
+            svg_settings.time_scale = animation_config.speed
         colors_cycle = cycle(svg_settings.colors)
         agents_colors = {index: next(colors_cycle) for index in range(self.unwrapped.grid_config.num_agents)}
 
-        for agent_idx in range(self.unwrapped.grid_config.num_agents):
+        return {
+            'obstacles': obstacles,
+            'shifted_history': shifted_history,
+            'colors': agents_colors,
+            'grid_width': len(obstacles),
+            'grid_height': len(obstacles[0]) if len(obstacles) > 0 else 0,
+            'obs_radius': self.unwrapped.grid_config.obs_radius,
+            'on_target': self.unwrapped.grid_config.on_target,
+            'animation_config': animation_config,
+            'svg_settings': svg_settings,
+            'num_agents': self.unwrapped.grid_config.num_agents,
+        }
+
+    def _build_svg_string(self, **kwargs):
+        from pogema.svg_animation.animation_drawer import AnimationDrawer, GridHolder
+
+        data = self._prepare_animation_data(**kwargs)
+        history = decompress_history(data['shifted_history'])
+
+        for agent_idx in range(data['num_agents']):
             history[agent_idx].append(history[agent_idx][-1])
 
         episode_length = len(history[0])
-        if animation_config.egocentric_idx is not None and self.unwrapped.grid_config.on_target == 'finish':
-            episode_length = history[animation_config.egocentric_idx][-1].step + 1
-            for agent_idx in range(self.unwrapped.grid_config.num_agents):
+        ac = data['animation_config']
+        if ac.egocentric_idx is not None and data['on_target'] == 'finish':
+            episode_length = history[ac.egocentric_idx][-1].step + 1
+            for agent_idx in range(data['num_agents']):
                 history[agent_idx] = history[agent_idx][:episode_length]
 
         grid_holder = GridHolder(
-            width=len(obstacles), height=len(obstacles[0]),
-            obstacles=obstacles,
+            width=data['grid_width'], height=data['grid_height'],
+            obstacles=data['obstacles'],
             episode_length=episode_length,
             history=history,
-            obs_radius=self.unwrapped.grid_config.obs_radius,
-            on_target=self.unwrapped.grid_config.on_target,
-            colors=agents_colors,
-            config=animation_config,
-            svg_settings=svg_settings,
+            obs_radius=data['obs_radius'],
+            on_target=data['on_target'],
+            colors=data['colors'],
+            config=ac,
+            svg_settings=data['svg_settings'],
         )
 
         animation = AnimationDrawer().create_animation(grid_holder)
         return animation.render()
 
-    def render_animation(self, animation_config=None):
-        return SvgAnimation(self._build_svg_string(animation_config=animation_config))
+    def _build_html_string(self, **kwargs):
+        from pogema.canvas_animation.canvas_drawer import CanvasDrawer
 
-    def save_animation(self, name='render.svg', animation_config=None):
-        self.render_animation(animation_config=animation_config).save(name)
+        data = self._prepare_animation_data(**kwargs)
+
+        # Compute episode length from sparse history
+        max_step = max(states[-1].step for states in data['shifted_history'])
+        episode_length = max_step + 1
+
+        ac = data['animation_config']
+        if ac.egocentric_idx is not None and data['on_target'] == 'finish':
+            ego_history = data['shifted_history'][ac.egocentric_idx]
+            # Find when ego agent finishes
+            for s in reversed(ego_history):
+                if s.active:
+                    episode_length = s.step + 1
+                    break
+
+        return CanvasDrawer().create_animation(
+            obstacles=data['obstacles'],
+            sparse_history=data['shifted_history'],
+            colors=data['colors'],
+            grid_width=data['grid_width'],
+            grid_height=data['grid_height'],
+            episode_length=episode_length,
+            obs_radius=data['obs_radius'],
+            on_target=data['on_target'],
+            config=ac,
+            svg_settings=data['svg_settings'],
+        )
+
+    def render_animation(self, **kwargs):
+        return SvgAnimation(self._build_svg_string(**kwargs))
+
+    def render_html_animation(self, **kwargs):
+        return HtmlAnimation(self._build_html_string(**kwargs))
+
+    def save_animation(self, name='render.svg', **kwargs):
+        self.render_animation(**kwargs).save(name)
+
+    def save_html_animation(self, name='render.html', **kwargs):
+        self.render_html_animation(**kwargs).save(name)
