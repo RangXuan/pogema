@@ -8,6 +8,8 @@ from pogema.svg_animation.svg_objects import Animation, Circle, Line, Rectangle,
 
 @dataclass
 class AnimationConfig:
+    """Internal render options for SVG and canvas animation drawers."""
+
     show_agents: bool = True
     egocentric_idx: int | None = None
     static_frame_idx: int | None = None

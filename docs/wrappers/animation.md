@@ -2,6 +2,8 @@
 
 POGEMA can record episodes as SVG or HTML canvas animations. The `AnimationWrapper` is included by default but inactive — it adds zero overhead until enabled.
 
+In POGEMA 2.0, rendering options are passed directly as keyword arguments. The deprecated `AnimationMonitor` wrapper and public `AnimationConfig` API were removed.
+
 ## Basic Usage
 
 ```python exec="on" source="above"

@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 from tabulate import tabulate
 
-from pogema import SvgAnimation, pogema_v0
+from pogema import HtmlAnimation, SvgAnimation, pogema_v0
 from pogema.envs import ActionsSampler
 from pogema.grid import GridConfig
 from pogema.wrappers.persistence import PersistentWrapper
@@ -310,6 +310,20 @@ def test_enable_html_animation_and_save(tmp_path):
         content = f.read()
     assert '<!DOCTYPE html>' in content
     assert 'canvas' in content
+
+
+def test_render_html_animation_returns_html_animation():
+    gc = GridConfig(num_agents=2, size=6, obs_radius=2, density=0.3, seed=42, on_target='finish')
+    env = pogema_v0(gc)
+    env.enable_animation()
+    env.reset()
+    run_episode(env=env)
+
+    anim = env.render_html_animation(show_controls=False)
+    assert isinstance(anim, HtmlAnimation)
+    assert '<!DOCTYPE html>' in str(anim)
+    assert 'HtmlAnimation(' in repr(anim)
+    assert "'showControls':false" in str(anim) or '"showControls":false' in str(anim)
 
 
 def test_no_overhead_without_animation():

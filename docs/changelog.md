@@ -5,6 +5,8 @@
 - Removed PyMARL integration
 - Added `PogemaWrapper` base class with explicit method forwarding
 - `AnimationWrapper` with enable/disable/save API and zero overhead when inactive
+- Added HTML canvas animations via `render_html_animation()` and `save_html_animation()`
+- Removed the deprecated `AnimationMonitor` wrapper and public `AnimationConfig` API. Use `env.enable_animation()`, then pass render options directly to `save_animation()`, `render_animation()`, `save_html_animation()`, or `render_html_animation()`
 - `soft` collision system as default
 - Terminal render trimming
 
