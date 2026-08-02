@@ -57,6 +57,12 @@ Pogema provides integrations with a range of MARL frameworks: PettingZoo, PyMARL
 
 ### PettingZoo
 
+Install the optional extra if you need official PettingZoo utilities or wrappers:
+
+```bash
+pip install "pogema[pettingzoo]"
+```
+
 ```python
 from pogema import pogema_v0, GridConfig
 

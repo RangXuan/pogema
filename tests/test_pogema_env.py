@@ -117,9 +117,10 @@ def test_standard_pogema_animation():
 
 def test_gym_pogema_animation():
     import gymnasium
-    env = gymnasium.make('Pogema-v0',
-                         grid_config=GridConfig(num_agents=2, size=6, obs_radius=2, density=0.3, seed=42,
-                                                on_target='finish'))
+    with pytest.warns(UserWarning, match="SingleAgentWrapper is wrapping an environment with 2 agents"):
+        env = gymnasium.make('Pogema-v0',
+                             grid_config=GridConfig(num_agents=2, size=6, obs_radius=2, density=0.3, seed=42,
+                                                    on_target='finish'))
     env.enable_animation()
     env.reset()
 
@@ -324,6 +325,38 @@ def test_render_html_animation_returns_html_animation():
     assert '<!DOCTYPE html>' in str(anim)
     assert 'HtmlAnimation(' in repr(anim)
     assert "'showControls':false" in str(anim) or '"showControls":false' in str(anim)
+
+
+def test_save_video_animation_without_enable_raises():
+    gc = GridConfig(num_agents=2, size=6, obs_radius=2, density=0.3, seed=42, on_target='finish')
+    env = pogema_v0(gc)
+    env.reset()
+    with pytest.raises(RuntimeError, match="Animation is not active"):
+        env.save_video_animation('test.mp4')
+
+
+def test_save_video_animation(tmp_path):
+    pytest.importorskip("PIL")
+    imageio = pytest.importorskip("imageio.v2")
+
+    gc = GridConfig(num_agents=2, size=6, obs_radius=2, density=0.3, seed=42, on_target='finish',
+                    max_episode_steps=16)
+    env = pogema_v0(gc)
+    env.enable_animation()
+    env.reset()
+    run_episode(env=env)
+
+    video_path = tmp_path / 'test_anim.mp4'
+    env.save_video_animation(str(video_path), fps=2, max_size=128, static_frame_idx=0)
+    assert video_path.exists()
+    assert video_path.stat().st_size > 0
+
+    reader = imageio.get_reader(video_path)
+    frame = reader.get_data(0)
+    assert reader.count_frames() == 2
+    assert reader.get_meta_data()['fps'] == 2
+    reader.close()
+    assert frame.shape == (128, 128, 3)
 
 
 def test_no_overhead_without_animation():

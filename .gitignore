@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.coverage
+htmlcov/
+
+# Tool caches
+.pytest_cache/
+.ruff_cache/
+
+# Virtual environments
+.venv/
+
+# Local editor and OS files
+.DS_Store
+.idea/
+
+# Documentation builds
+site/
+
+# uv lock is intentionally local for this library package
+uv.lock
+
+# Generated animation/render outputs
+renders/

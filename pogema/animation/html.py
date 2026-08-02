@@ -1,18 +1,18 @@
 import json
 
 
-class CanvasDrawer:
+class HtmlCanvasDrawer:
 
     def create_animation(self, obstacles, sparse_history, colors, grid_width, grid_height,
-                         episode_length, obs_radius, on_target, config, svg_settings):
+                         episode_length, obs_radius, on_target, config, animation_style):
         data = self._build_data(obstacles, sparse_history, colors, grid_width, grid_height,
-                                episode_length, obs_radius, on_target, config, svg_settings)
+                                episode_length, obs_radius, on_target, config, animation_style)
         data_json = json.dumps(data, separators=(',', ':'))
         return self._render_template(data_json)
 
     @staticmethod
     def _build_data(obstacles, sparse_history, colors, grid_width, grid_height,
-                    episode_length, obs_radius, on_target, config, svg_settings):
+                    episode_length, obs_radius, on_target, config, animation_style):
         obstacle_list = []
         for r in range(len(obstacles)):
             for c in range(len(obstacles[0])):
@@ -33,16 +33,16 @@ class CanvasDrawer:
             'grid': {
                 'w': grid_width,
                 'h': grid_height,
-                'cellSize': svg_settings.scale_size,
-                'r': svg_settings.r,
-                'rx': svg_settings.rx,
-                'obstacleColor': svg_settings.obstacle_color,
-                'strokeWidth': svg_settings.stroke_width,
+                'cellSize': animation_style.scale_size,
+                'r': animation_style.r,
+                'rx': animation_style.rx,
+                'obstacleColor': animation_style.obstacle_color,
+                'strokeWidth': animation_style.stroke_width,
                 'obstacles': obstacle_list,
             },
             'agents': agents,
             'totalSteps': episode_length,
-            'stepDuration': svg_settings.time_scale,
+            'stepDuration': animation_style.time_scale,
             'config': {
                 'egoIdx': config.egocentric_idx,
                 'obsRadius': obs_radius,
@@ -50,12 +50,12 @@ class CanvasDrawer:
                 'showGrid': config.show_grid_lines,
                 'showAgents': config.show_agents,
                 'staticFrame': config.static_frame_idx,
-                'egoColor': svg_settings.ego_color,
-                'egoOtherColor': svg_settings.ego_other_color,
-                'shadedOpacity': svg_settings.shaded_opacity,
+                'egoColor': animation_style.ego_color,
+                'egoOtherColor': animation_style.ego_other_color,
+                'shadedOpacity': animation_style.shaded_opacity,
                 'showControls': config.show_controls,
             },
-            'colors': list(svg_settings.colors),
+            'colors': list(animation_style.colors),
         }
 
     @staticmethod
@@ -565,3 +565,6 @@ requestAnimationFrame(animate);
 </script>
 </body>
 </html>'''
+
+
+CanvasDrawer = HtmlCanvasDrawer

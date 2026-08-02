@@ -1,4 +1,4 @@
-/* POGEMA brand colors from svg_animation/animation_drawer.py */
+/* POGEMA brand colors from animation/config.py */
 :root {
   /* Primary: pogema red #c1433c */
   --md-primary-fg-color: #c1433c;

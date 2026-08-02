@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 
 from pogema import GridConfig
 from pogema.integrations.make_pogema import pogema_v0
@@ -59,6 +60,8 @@ def test_single_agent_gym_integration():
 
 
 def test_petting_zoo():
+    pytest.importorskip("pettingzoo")
+
     from pettingzoo.test import api_test, parallel_api_test
 
     gc = GridConfig(num_agents=16, size=16, integration='PettingZoo')

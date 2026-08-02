@@ -2,6 +2,12 @@
 
 POGEMA implements the PettingZoo Parallel API for multi-agent RL frameworks.
 
+The local PettingZoo-compatible wrapper is available in base POGEMA installs. Install the optional extra if you also need official PettingZoo utilities, wrappers, or API validation tools:
+
+```bash
+pip install "pogema[pettingzoo]"
+```
+
 ## Basic Usage
 
 ```python

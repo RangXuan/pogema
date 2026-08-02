@@ -55,6 +55,18 @@ env.save_animation('render.svg', show_grid_lines=False)
 env.save_html_animation('render.html', show_controls=True)
 ```
 
+## Video Export
+
+Video export is available as an optional dependency:
+
+```bash
+pip install "pogema[video]"
+```
+
+```python
+env.save_video_animation('render.mp4', fps=30, max_size=800)
+```
+
 ## Egocentric View
 
 Follow a specific agent's perspective:

@@ -2,48 +2,10 @@ import math
 import typing
 from dataclasses import dataclass
 
-from pogema import GridConfig
-from pogema.svg_animation.svg_objects import Animation, Circle, Line, Rectangle, RectangleHref
+from pogema.animation.config import AnimationConfig, AnimationStyle
+from pogema.animation.svg_objects import Animation, Circle, Line, Rectangle, RectangleHref
 
-
-@dataclass
-class AnimationConfig:
-    """Internal render options for SVG and canvas animation drawers."""
-
-    show_agents: bool = True
-    egocentric_idx: int | None = None
-    static_frame_idx: int | None = None
-    show_grid_lines: bool = True
-    show_controls: bool = True
-    colors: tuple | list | None = None
-    speed: float | None = None
-
-
-@dataclass
-class SvgSettings:
-    r: int = 35
-    stroke_width: int = 10
-    scale_size: int = 100
-    time_scale: float = 0.25
-    draw_start: int = 100
-    rx: int = 15
-
-    obstacle_color: str = '#84A1AE'
-    ego_color: str = '#c1433c'
-    ego_other_color: str = '#6e81af'
-    shaded_opacity: float = 0.2
-    egocentric_shaded: bool = True
-    stroke_dasharray: int = 25
-
-    colors: tuple = (
-        '#c1433c',
-        '#2e6f9e',
-        '#6e81af',
-        '#00b9c8',
-        '#72D5C8',
-        '#0ea08c',
-        '#8F7B66',
-    )
+SvgSettings = AnimationStyle
 
 
 @dataclass
@@ -55,10 +17,17 @@ class GridHolder:
     colors: dict = None
     history: list = None
     obs_radius: int = None
-    grid_config: GridConfig = None
     on_target: str = None
     config: AnimationConfig = None
-    svg_settings: SvgSettings = None
+    style: AnimationStyle = None
+
+    @property
+    def svg_settings(self):
+        return self.style
+
+    @svg_settings.setter
+    def svg_settings(self, value):
+        self.style = value
 
 
 class Drawing:
@@ -101,7 +70,7 @@ class Drawing:
         return "\n".join(elements_svg)
 
 
-class AnimationDrawer:
+class SvgDrawer:
 
     def __init__(self):
         pass
@@ -110,7 +79,7 @@ class AnimationDrawer:
         gh = grid_holder
         render_width = gh.height * gh.svg_settings.scale_size + gh.svg_settings.scale_size
         render_height = gh.width * gh.svg_settings.scale_size + gh.svg_settings.scale_size
-        drawing = Drawing(width=render_width, height=render_height, svg_settings=SvgSettings())
+        drawing = Drawing(width=render_width, height=render_height, svg_settings=gh.style)
         obstacles = self.create_obstacles(gh)
 
         agents = []
@@ -466,3 +435,6 @@ class AnimationDrawer:
             target = Circle(**circle_settings)
             targets.append(target)
         return targets
+
+
+AnimationDrawer = SvgDrawer

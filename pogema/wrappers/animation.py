@@ -105,7 +105,7 @@ class AnimationWrapper(PogemaWrapper):
                 "No history recorded. Call env.reset() after enable_animation() before saving."
             )
 
-        from pogema.svg_animation.animation_drawer import AnimationConfig, SvgSettings
+        from pogema.animation.config import AnimationConfig, AnimationStyle
 
         animation_config = AnimationConfig(**kwargs)
 
@@ -128,12 +128,12 @@ class AnimationWrapper(PogemaWrapper):
                     shifted.append(s)
             shifted_history.append(shifted)
 
-        svg_settings = SvgSettings()
+        animation_style = AnimationStyle()
         if animation_config.colors is not None:
-            svg_settings.colors = tuple(animation_config.colors)
+            animation_style.colors = tuple(animation_config.colors)
         if animation_config.speed is not None:
-            svg_settings.time_scale = animation_config.speed
-        colors_cycle = cycle(svg_settings.colors)
+            animation_style.time_scale = animation_config.speed
+        colors_cycle = cycle(animation_style.colors)
         agents_colors = {index: next(colors_cycle) for index in range(self.unwrapped.grid_config.num_agents)}
 
         return {
@@ -145,12 +145,25 @@ class AnimationWrapper(PogemaWrapper):
             'obs_radius': self.unwrapped.grid_config.obs_radius,
             'on_target': self.unwrapped.grid_config.on_target,
             'animation_config': animation_config,
-            'svg_settings': svg_settings,
+            'animation_style': animation_style,
             'num_agents': self.unwrapped.grid_config.num_agents,
         }
 
+    @staticmethod
+    def _get_sparse_episode_length(sparse_history, animation_config, on_target):
+        max_step = max(states[-1].step for states in sparse_history)
+        episode_length = max_step + 1
+
+        if animation_config.egocentric_idx is not None and on_target == 'finish':
+            ego_history = sparse_history[animation_config.egocentric_idx]
+            for state in reversed(ego_history):
+                if state.active:
+                    return state.step + 1
+
+        return episode_length
+
     def _build_svg_string(self, **kwargs):
-        from pogema.svg_animation.animation_drawer import AnimationDrawer, GridHolder
+        from pogema.animation.svg import GridHolder, SvgDrawer
 
         data = self._prepare_animation_data(**kwargs)
         history = decompress_history(data['shifted_history'])
@@ -174,31 +187,20 @@ class AnimationWrapper(PogemaWrapper):
             on_target=data['on_target'],
             colors=data['colors'],
             config=ac,
-            svg_settings=data['svg_settings'],
+            style=data['animation_style'],
         )
 
-        animation = AnimationDrawer().create_animation(grid_holder)
+        animation = SvgDrawer().create_animation(grid_holder)
         return animation.render()
 
     def _build_html_string(self, **kwargs):
-        from pogema.canvas_animation.canvas_drawer import CanvasDrawer
+        from pogema.animation.html import HtmlCanvasDrawer
 
         data = self._prepare_animation_data(**kwargs)
-
-        # Compute episode length from sparse history
-        max_step = max(states[-1].step for states in data['shifted_history'])
-        episode_length = max_step + 1
-
         ac = data['animation_config']
-        if ac.egocentric_idx is not None and data['on_target'] == 'finish':
-            ego_history = data['shifted_history'][ac.egocentric_idx]
-            # Find when ego agent finishes
-            for s in reversed(ego_history):
-                if s.active:
-                    episode_length = s.step + 1
-                    break
+        episode_length = self._get_sparse_episode_length(data['shifted_history'], ac, data['on_target'])
 
-        return CanvasDrawer().create_animation(
+        return HtmlCanvasDrawer().create_animation(
             obstacles=data['obstacles'],
             sparse_history=data['shifted_history'],
             colors=data['colors'],
@@ -208,7 +210,22 @@ class AnimationWrapper(PogemaWrapper):
             obs_radius=data['obs_radius'],
             on_target=data['on_target'],
             config=ac,
-            svg_settings=data['svg_settings'],
+            animation_style=data['animation_style'],
+        )
+
+    def save_video_animation(self, name='render.mp4', fps=30, max_size=800, **kwargs):
+        from pogema.animation.video import save_video
+
+        data = self._prepare_animation_data(**kwargs)
+        ac = data['animation_config']
+        episode_length = self._get_sparse_episode_length(data['shifted_history'], ac, data['on_target'])
+
+        save_video(
+            name=name,
+            data=data,
+            episode_length=episode_length,
+            fps=fps,
+            max_size=max_size,
         )
 
     def render_animation(self, **kwargs):
