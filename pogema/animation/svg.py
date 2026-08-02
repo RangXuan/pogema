@@ -38,6 +38,7 @@ class Drawing:
         self.origin = (0, 0)
         self.elements = []
         self.svg_settings = svg_settings
+        self.background_color = None
 
     def add_element(self, element):
         self.elements.append(element)
@@ -65,6 +66,11 @@ class Drawing:
         '''
 
         elements_svg = [svg_header, '<defs>', definitions, '</defs>\n']
+        if self.background_color is not None:
+            elements_svg.append(
+                f'<rect x="{dx}" y="{dy - self.height}" width="{self.width}" height="{self.height}" '
+                f'fill="{self.background_color}" />'
+            )
         elements_svg.extend(element.render() for element in self.elements)
         elements_svg.append('</svg>')
         return "\n".join(elements_svg)
@@ -80,6 +86,7 @@ class SvgDrawer:
         render_width = gh.height * gh.svg_settings.scale_size + gh.svg_settings.scale_size
         render_height = gh.width * gh.svg_settings.scale_size + gh.svg_settings.scale_size
         drawing = Drawing(width=render_width, height=render_height, svg_settings=gh.style)
+        drawing.background_color = gh.config.background_color
         obstacles = self.create_obstacles(gh)
 
         agents = []

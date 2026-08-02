@@ -320,11 +320,12 @@ def test_render_html_animation_returns_html_animation():
     env.reset()
     run_episode(env=env)
 
-    anim = env.render_html_animation(show_controls=False)
+    anim = env.render_html_animation(show_controls=False, background_color='#123456')
     assert isinstance(anim, HtmlAnimation)
     assert '<!DOCTYPE html>' in str(anim)
     assert 'HtmlAnimation(' in repr(anim)
     assert "'showControls':false" in str(anim) or '"showControls":false' in str(anim)
+    assert '"backgroundColor":"#123456"' in str(anim)
 
 
 def test_save_video_animation_without_enable_raises():
@@ -347,7 +348,8 @@ def test_save_video_animation(tmp_path):
     run_episode(env=env)
 
     video_path = tmp_path / 'test_anim.mp4'
-    env.save_video_animation(str(video_path), fps=2, max_size=128, static_frame_idx=0)
+    env.save_video_animation(str(video_path), fps=2, max_size=128, static_frame_idx=0,
+                             background_color='#123456')
     assert video_path.exists()
     assert video_path.stat().st_size > 0
 
@@ -357,6 +359,28 @@ def test_save_video_animation(tmp_path):
     assert reader.get_meta_data()['fps'] == 2
     reader.close()
     assert frame.shape == (128, 128, 3)
+    assert np.allclose(np.asarray(frame)[0, 0], [18, 52, 86], atol=10)
+
+
+def test_render_and_save_tikz(tmp_path):
+    gc = GridConfig(num_agents=2, size=6, obs_radius=2, density=0.3, seed=42, on_target='finish')
+    env = pogema_v0(gc)
+    env.enable_animation()
+    env.reset()
+    episode = run_episode(env=env)
+
+    tikz = env.render_tikz(egocentric_idx=0, background_color='#123456')
+    assert '\\begin{tikzpicture}' in tikz
+    assert 'dash pattern=' in tikz
+    assert '\\fill[pogemaBackground]' in tikz
+    assert tikz == env.render_tikz(static_frame_idx=len(episode) - 1, egocentric_idx=0,
+                                   background_color='#123456')
+    with pytest.raises(ValueError, match='#RRGGBB'):
+        env.render_tikz(background_color='white')
+
+    tikz_path = tmp_path / 'nested' / 'frame.tex'
+    env.save_tikz(tikz_path)
+    assert tikz_path.read_text().endswith('\\end{tikzpicture}')
 
 
 def test_no_overhead_without_animation():
@@ -463,9 +487,10 @@ def test_render_animation_with_config():
     env.reset()
     run_episode(env=env)
 
-    anim = env.render_animation(egocentric_idx=0)
+    anim = env.render_animation(egocentric_idx=0, background_color='#123456')
     assert isinstance(anim, SvgAnimation)
     assert '<svg' in str(anim)
+    assert 'fill="#123456"' in str(anim)
 
 
 def test_steps_per_second_throughput():

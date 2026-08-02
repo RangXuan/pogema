@@ -228,6 +228,20 @@ class AnimationWrapper(PogemaWrapper):
             max_size=max_size,
         )
 
+    def render_tikz(self, static_frame_idx=None, **kwargs):
+        from pogema.animation.tikz import render_tikz
+
+        data = self._prepare_animation_data(static_frame_idx=static_frame_idx, **kwargs)
+        return render_tikz(data)
+
+    def save_tikz(self, name='render.tex', static_frame_idx=None, **kwargs):
+        tikz = self.render_tikz(static_frame_idx=static_frame_idx, **kwargs)
+        parent = os.path.dirname(name)
+        if parent:
+            os.makedirs(parent, exist_ok=True)
+        with open(name, 'w') as file:
+            file.write(tikz)
+
     def render_animation(self, **kwargs):
         return SvgAnimation(self._build_svg_string(**kwargs))
 

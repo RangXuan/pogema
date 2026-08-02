@@ -12,12 +12,18 @@ class AnimationConfig:
     show_controls: bool = True
     colors: tuple | list | None = None
     speed: float | None = None
+    background_color: str | None = None
 
     def __post_init__(self):
         if self.speed is not None and self.speed <= 0:
             raise ValueError("speed must be positive.")
         if self.colors is not None and not self.colors:
             raise ValueError("colors must not be empty.")
+        if self.background_color is not None:
+            color = self.background_color
+            if (not isinstance(color, str) or len(color) != 7 or not color.startswith('#')
+                    or any(char not in '0123456789abcdefABCDEF' for char in color[1:])):
+                raise ValueError("background_color must use #RRGGBB notation.")
 
 
 @dataclass

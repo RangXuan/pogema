@@ -1,6 +1,6 @@
 # Animation
 
-POGEMA can record episodes as SVG or HTML canvas animations. The `AnimationWrapper` is included by default but inactive — it adds zero overhead until enabled.
+POGEMA can record episodes as SVG, HTML canvas, or MP4 animations and export static TikZ figures. The `AnimationWrapper` is included by default but inactive — it adds zero overhead until enabled.
 
 In POGEMA 2.0, rendering options are passed directly as keyword arguments. The deprecated `AnimationMonitor` wrapper and public `AnimationConfig` API were removed.
 
@@ -26,7 +26,7 @@ print(f'<div class="pogema-anim">{svg}</div>')  # markdown-exec: hide
 
 ## Rendering Options
 
-All rendering options are passed as keyword arguments to `save_animation()`, `save_html_animation()`, `render_animation()`, or `render_html_animation()`:
+All rendering options are passed directly to the relevant render or save method:
 
 | Parameter | Type | Default | Description |
 |---|---|---|---|
@@ -35,6 +35,7 @@ All rendering options are passed as keyword arguments to `save_animation()`, `sa
 | `static_frame_idx` | `int \| None` | `None` | Render single frame instead of animation |
 | `show_grid_lines` | `bool` | `True` | Show grid lines |
 | `show_controls` | `bool` | `True` | Show playback controls (HTML only) |
+| `background_color` | `str \| None` | `None` | Solid `#RRGGBB` drawing background |
 
 ```python
 from pogema import pogema_v0, GridConfig
@@ -53,6 +54,9 @@ env.save_animation('render.svg', show_grid_lines=False)
 
 # HTML canvas animation (with playback controls)
 env.save_html_animation('render.html', show_controls=True)
+
+# Shared by SVG, HTML, MP4, and TikZ
+env.save_animation('dark.svg', background_color='#111827')
 ```
 
 ## Video Export
@@ -65,6 +69,14 @@ pip install "pogema[video]"
 
 ```python
 env.save_video_animation('render.mp4', fps=30, max_size=800)
+```
+
+## TikZ Export
+
+TikZ export is dependency-free and produces a static source fragment of the latest frame for use with `\usepackage{tikz}`:
+
+```python
+env.save_tikz('render.tex')
 ```
 
 ## Egocentric View

@@ -7,6 +7,8 @@
 - `AnimationWrapper` with enable/disable/save API and zero overhead when inactive
 - Added HTML canvas animations via `render_html_animation()` and `save_html_animation()`
 - Added optional MP4 video export via `save_video_animation()`
+- Added dependency-free static TikZ export via `render_tikz()` and `save_tikz()`
+- Added shared `background_color` rendering option
 - Moved the official PettingZoo package to the optional `pettingzoo` extra
 - Removed the deprecated `AnimationMonitor` wrapper and public `AnimationConfig` API. Use `env.enable_animation()`, then pass render options directly to `save_animation()`, `render_animation()`, `save_html_animation()`, or `render_html_animation()`
 - `soft` collision system as default

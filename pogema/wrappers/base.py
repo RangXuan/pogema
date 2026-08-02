@@ -20,7 +20,7 @@ _POGEMA_FORWARDED = frozenset({
     'get_lifelong_targets_xy',
     # AnimationWrapper
     'enable_animation', 'disable_animation', 'save_animation', 'render_animation', 'animation_is_active',
-    'save_html_animation', 'render_html_animation', 'save_video_animation',
+    'save_html_animation', 'render_html_animation', 'save_video_animation', 'save_tikz', 'render_tikz',
 })
 
 
@@ -107,6 +107,12 @@ class PogemaWrapper(Wrapper):
 
     def save_video_animation(self, name='render.mp4', **kwargs):
         return self.env.save_video_animation(name, **kwargs)
+
+    def save_tikz(self, name='render.tex', **kwargs):
+        return self.env.save_tikz(name, **kwargs)
+
+    def render_tikz(self, **kwargs):
+        return self.env.render_tikz(**kwargs)
 
     @property
     def animation_is_active(self):

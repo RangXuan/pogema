@@ -149,7 +149,7 @@ class _VideoRenderer:
                         if self.obstacles[row][col]:
                             self.obstacle_seen_at.setdefault((row, col), state.step)
 
-        self.grid_background = Image.new('RGB', self.pixel_size, '#ffffff')
+        self.grid_background = Image.new('RGB', self.pixel_size, self.config.background_color or '#ffffff')
         self._draw_grid(ImageDraw.Draw(self.grid_background, 'RGBA'))
         self.background = self.grid_background.copy()
         self._draw_obstacles(ImageDraw.Draw(self.background, 'RGBA'))

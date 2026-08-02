@@ -54,6 +54,7 @@ class HtmlCanvasDrawer:
                 'egoOtherColor': animation_style.ego_other_color,
                 'shadedOpacity': animation_style.shaded_opacity,
                 'showControls': config.show_controls,
+                'backgroundColor': config.background_color or '#ffffff',
             },
             'colors': list(animation_style.colors),
         }
@@ -215,6 +216,8 @@ for (const a of agents) {{
 // --- Draw static layer ---
 function drawStatic() {{
     sCtx.clearRect(0, 0, pw, ph);
+    sCtx.fillStyle = config.backgroundColor;
+    sCtx.fillRect(0, 0, pw, ph);
 
     // Grid lines
     if (config.showGrid) {{
