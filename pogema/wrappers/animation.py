@@ -109,7 +109,8 @@ class AnimationWrapper(PogemaWrapper):
 
         animation_config = AnimationConfig(**kwargs)
 
-        working_radius = self.unwrapped.grid_config.obs_radius - 1
+        radius = self.unwrapped.grid_config.obs_radius
+        working_radius = {'none': radius, 'thin': radius - 1, 'full': 0}[animation_config.border]
         if working_radius > 0:
             obstacles = self.unwrapped.get_obstacles(ignore_borders=False)[working_radius:-working_radius,
                         working_radius:-working_radius]

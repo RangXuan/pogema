@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Literal
 
 
 @dataclass
@@ -13,6 +14,7 @@ class AnimationConfig:
     colors: tuple | list | None = None
     speed: float | None = None
     background_color: str | None = None
+    border: Literal['none', 'thin', 'full'] = 'thin'
 
     def __post_init__(self):
         if self.speed is not None and self.speed <= 0:
@@ -24,6 +26,8 @@ class AnimationConfig:
             if (not isinstance(color, str) or len(color) != 7 or not color.startswith('#')
                     or any(char not in '0123456789abcdefABCDEF' for char in color[1:])):
                 raise ValueError("background_color must use #RRGGBB notation.")
+        if self.border not in ('none', 'thin', 'full'):
+            raise ValueError("border must be 'none', 'thin', or 'full'.")
 
 
 @dataclass

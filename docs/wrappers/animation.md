@@ -36,6 +36,7 @@ All rendering options are passed directly to the relevant render or save method:
 | `show_grid_lines` | `bool` | `True` | Show grid lines |
 | `show_controls` | `bool` | `True` | Show playback controls (HTML only) |
 | `background_color` | `str \| None` | `None` | Solid `#RRGGBB` drawing background |
+| `border` | `'none' \| 'thin' \| 'full'` | `'thin'` | Amount of observation border to render |
 
 ```python
 from pogema import pogema_v0, GridConfig

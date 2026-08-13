@@ -383,6 +383,17 @@ def test_render_and_save_tikz(tmp_path):
     assert tikz_path.read_text().endswith('\\end{tikzpicture}')
 
 
+def test_animation_border_options():
+    env = pogema_v0(GridConfig(map='...', num_agents=1, agents_xy=[[0, 0]], targets_xy=[[0, 2]]))
+    env.enable_animation()
+    env.reset()
+
+    assert '(0,0) rectangle (4,2)' in env.render_tikz(border='none')
+    assert '(0,0) rectangle (6,4)' in env.render_tikz(border='thin')
+    with pytest.raises(ValueError, match='border'):
+        env.render_tikz(border='wide')
+
+
 def test_no_overhead_without_animation():
     gc = GridConfig(num_agents=2, size=6, obs_radius=2, density=0.3, seed=42, on_target='finish')
     env = pogema_v0(gc)
